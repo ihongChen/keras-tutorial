@@ -84,3 +84,106 @@ digit = train_images[4]
 import matplotlib.pyplot as plt
 plt.imshow(digit,cmap=plt.cm.binary)
 
+#%% 
+my_slice = train_images[10:100] #train_images[10:100,:,:]
+print(my_slice.shape)
+
+my_slice = train_images[:,14:,14:]
+my_slice = train_images[:,7:-7,7:-7]
+
+# %% data batch 
+batch = train_images[:128]
+batch = train_images[128:256] # batch axis ,batch dimension
+
+# %% Real world 
+
+# (sample,features)
+# (sample,timesteps, features) 
+# (samples, width, height, channels )
+
+## element wise relu 
+def naive_relu(x):
+    """ x is 2D numpy array"""
+    assert len(x.shape) == 2
+    
+    x = x.copy()
+    for i in range(x.shape[0]):
+        for j in range(x.shape[1]):
+            x[i,j] = max(x[i,j],0)
+            
+    return x
+
+def naive_add(x,y):
+    """ x,y are 2D numpy array""" 
+    assert len(x.shape) == 2
+    assert x.shape == y.shape
+    
+    x = x.copy() # avoid overwirting 
+    for i in range(x.shape[0]):
+        for j in range(x.shape[1]):
+            x[i,j] += y[i,j]
+
+    return x
+
+#import numpy as np 
+#z = x + y
+#z = np.maximum(z,0) ##
+
+## matrix vector addition 
+def naive_add_matrix_and_vector(x, y):
+    # x is 2D numpy array
+    # y is numpy vector 
+    assert len(x.shape) == 2 
+    assert len(y.shape) == 1
+    assert x.shape[1] == y.shape[0]
+    
+    x = x.copy()
+    
+    for i in range(x.shape[0]):
+        for j in range(x.shape[1]):
+            x[i,j] += y[j]
+            
+    return x
+            
+# %%
+import numpy as np
+
+# x is a random tensor with shape (64, 32, 10)
+x = np.random.random((64, 3, 32, 10))
+# y is a random tensor with shape (32, 10)
+y = np.random.random((32, 10))
+
+# the output has shape (64, 3, 32, 10) like x
+z = np.maximum(x, y)
+
+
+# %% tensor dot product 
+y1 = y.transpose()
+z = np.dot(x,y1) 
+
+# or 
+from keras import backend as K
+#z = K.dot(x,y1)
+
+# %% dot (naive dot product)
+def naive_vector_dot(x, y):
+    # x and y are Numpy vectors
+    assert len(x.shape) == 1
+    assert len(y.shape) == 1
+    assert x.shape[0] == y.shape[0]
+
+    z = 0.
+    for i in range(x.shape[0]):
+        z += x[i] * y[i]
+    return z
+
+def naive_vector_dot(x, y):
+    # x and y are Numpy vectors
+    assert len(x.shape) == 1
+    assert len(y.shape) == 1
+    assert x.shape[0] == y.shape[0]
+
+    z = 0.
+    for i in range(x.shape[0]):
+        z += x[i] * y[i]
+    return z
