@@ -177,13 +177,100 @@ def naive_vector_dot(x, y):
         z += x[i] * y[i]
     return z
 
-def naive_vector_dot(x, y):
-    # x and y are Numpy vectors
-    assert len(x.shape) == 1
-    assert len(y.shape) == 1
-    assert x.shape[0] == y.shape[0]
 
-    z = 0.
+def naive_matrix_vector_dot(x, y):
+    # x is a Numpy matrix
+    # y is a Numpy vector
+    assert len(x.shape) == 2
+    assert len(y.shape) == 1
+    # The 1st dimension of x must be
+    # the same as the 0th dimension of y!
+    assert x.shape[1] == y.shape[0]
+
+    # This operation returns a vector of 0s
+    # with the same shape as y
+    z = np.zeros(x.shape[0])
     for i in range(x.shape[0]):
-        z += x[i] * y[i]
+        for j in range(x.shape[1]):
+            z[i] += x[i, j] * y[j]
     return z
+
+xx = np.random.random((10,20))
+yy = np.random.random((20,))
+m_dot = naive_matrix_vector_dot(xx,yy)
+print('shape of mdot:',m_dot.shape)
+
+# %%
+
+def naive_matrix_vector_dot(x, y):
+    z = np.zeros(x.shape[0])
+    for i in range(x.shape[0]):
+        z[i] = naive_vector_dot(x[i, :], y)
+    return z
+
+
+def naive_matrix_dot(x, y):
+    # x and y are Numpy matrices
+    assert len(x.shape) == 2
+    assert len(y.shape) == 2
+    # The 1st dimension of x must be
+    # the same as the 0th dimension of y!
+    assert x.shape[1] == y.shape[0]
+
+    # This operation returns a matrix of 0s
+    # with a specific shape
+    z = np.zeros((x.shape[0], y.shape[1]))
+    # We iterate over the rows of x
+    for i in range(x.shape[0]):
+        # And over the columns of y
+        for j in range(y.shape[1]):
+            row_x = x[i, :]
+            column_y = y[:, j]
+            z[i, j] = naive_vector_dot(row_x, column_y)
+    return z
+
+# %% higher dim matrix dot ==> 
+"""
+(a,b,c,d) . (d) ==> (a,b,c)
+(a,b,c,d) . (d,e) ==> (a,b,c,e)
+"""
+
+# %% tensor reshaping
+
+x = np.array([[0,1],
+              [2,3],
+              [4.,5.]])
+    
+print(x.shape)    
+
+x1 = x.reshape((6,1))
+print(x1.shape)
+
+x2 = x.reshape((2,3))
+print(x2.shape)
+
+# %% matrix transpose
+
+x = np.zeros((300,20))
+xt = x.transpose()
+print('x shape:{}, xt shape:{}'.format(x.shape,xt.shape))
+
+
+# %% mini-batch SGD
+"""
+Repeat as long as needed:
+    1) Draw a batch of training samples x and corresponding targets y
+    2) Run the network on x (this is called "forward pass"),
+        obtain predictions y_pred
+    3) Compute the "loss" of the network on the batch,
+        a measure of the mismatch between y_pred and y
+    4.1) Compute the gradient of the loss with regard to
+        the parameters of the network (this is called "backward pass")
+    4.2) Move the parameters a little in the direction opposite to
+        the gradient, e.g. W -= step * gradient,
+        thus lowering the loss on the batch by a bit.
+"""
+
+#%% first nn example 
+
+
