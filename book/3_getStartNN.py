@@ -384,8 +384,7 @@ for i in range(k):
     all_mae_histories.append(mae_history)    
     
 # %% 
-average_mae_history = [
-    np.mean([x[i] for x in all_mae_histories]) for i in range(num_epochs))]
+average_mae_history = [np.mean([x[i] for x in all_mae_histories]) for i in range(num_epochs)]
     
 import matplotlib.pyplot as plt
 
