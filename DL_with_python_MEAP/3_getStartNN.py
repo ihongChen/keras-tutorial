@@ -11,19 +11,22 @@ Created on Fri Aug 11 16:32:39 2017
 ## A layer (sequential)
 from keras import layers,models
 # A dense layer with 32 output units
-#layer = layers.Dense(32, input_shape=(784,))
+layer = layers.Dense(32, input_shape=(784,))
 
-#model = models.Sequential()
-#model.add(layers.Dense(32, activation='relu', input_shape=(784,)))
-#model.add(layers.Dense(10, activation='softmax'))
+model = models.Sequential()
+model.add(layers.Dense(32, activation='relu', input_shape=(784,)))
+model.add(layers.Dense(10, activation='softmax'))
 
-
+## check input shape 
+model.layers[0].input_shape # (None, 784)
+model.layers[0].output_shape # (None,32)
 # %% Functional API
 input_tensor = layers.Input(shape = (784,))
 x = layers.Dense(32, activation='relu')(input_tensor)
 output_tensor = layers.Dense(10,activation = 'softmax')(x)
 
-model = models.Model(inputs = input_tensor, outputs = output_tensor)
+model = models.Model(inputs = input_tensor, 
+                     outputs = output_tensor)
 
 # %% optimizer
 from keras import optimizers
@@ -36,13 +39,16 @@ model.compile(optimizer=optimizers.RMSprop(lr=0.001),
 model.fit(input_tensor, target_tensor, batch_size=128, epochs=1)
 
 # %% imdb datasets
-
+# =============================================================================
+# Movie imdb datasets,
+#    -- positive negative comments prediction in imdb datasets
+# =============================================================================
 from keras.datasets import imdb
 
 (train_data, train_labels),(test_data, test_labels) = imdb.load_data(num_words=10000)
 
-train_data.shape
-train_data[0]
+train_data.shape # 25,000
+train_data[0] # len() : 218
 max([max(seq) for seq in train_data]) # no words index exceed 10000
 
 ## decode reviews to words
@@ -118,6 +124,7 @@ epochs = range(1, len(loss_values) + 1)
 plt.plot(epochs, loss_values, 'bo')
 # b+ is for "blue crosses"
 plt.plot(epochs, val_loss_values, 'b+')
+#plt.legend(['train_loss','val_loss'])
 plt.xlabel('Epochs')
 plt.ylabel('Loss')
 
@@ -129,6 +136,8 @@ val_acc_values = history_dict['val_acc']
 
 plt.plot(epochs, acc_values, 'bo')
 plt.plot(epochs, val_acc_values, 'b+')
+plt.legend(['train_acc','val_acc'])
+#plt.legend()
 plt.xlabel('Epochs')
 plt.ylabel('Accuracy')
 
@@ -139,21 +148,23 @@ plt.show()
 model = models.Sequential()
 model.add(layers.Dense(16, activation='relu', input_shape=(10000,)))
 model.add(layers.Dense(16, activation='relu'))
-model.add(layers.Dense(1, activation='sigmoid'))
+model.add(layers.Dense(1, activation='sigmoid')) # binary 
 
 model.compile(optimizer='rmsprop',
               loss='binary_crossentropy',
               metrics=['accuracy'])
-
+## stop trainning after 4 epochs ## 
 model.fit(x_train, y_train, epochs=4, batch_size=512)
 results = model.evaluate(x_test, y_test)
 
 # %% predict 
-model.predict(x_test)
+pred = model.predict(x_test)
 
 # %% 
-## multi-class classifier
-
+# =============================================================================
+# Multi-class classifier
+#   -- Routers news classifier to predict types of news
+# =============================================================================
 ## data sets : Routers news
 
 from keras.datasets import reuters
@@ -194,7 +205,9 @@ one_hot_test_labels = to_categorical(test_labels)
 
 #%% build nn model 
 model = models.Sequential()
-model.add(layers.Dense(64, activation='relu',input_shape=(10000,)))
+model.add(layers.Dense(64,
+                       activation='relu',
+                       input_shape=(10000,)))
 model.add(layers.Dense(64, activation='relu'))
 model.add(layers.Dense(46, activation='softmax'))
 
@@ -227,6 +240,7 @@ epochs = range(1, len(loss_values) + 1)
 
 plt.plot(epochs, loss_values, 'bo')
 plt.plot(epochs, val_loss_values, 'b+')
+plt.legend(['train_loss','val_loss'])
 plt.xlabel('Epochs')
 plt.ylabel('Loss')
 
@@ -241,7 +255,7 @@ plt.plot(epochs, acc_values, 'bo')
 plt.plot(epochs, val_acc_values, 'b+')
 plt.xlabel('Epochs')
 plt.ylabel('Accuracy')
-
+plt.legend(['train_acc','val_acc'])
 plt.show()
 
 # %% re-train
@@ -265,6 +279,23 @@ results = model.evaluate(x_test, one_hot_test_labels)
 prediction = model.predict(x_test)
 np.argmax(prediction[0])
 np.sum(prediction[0])
+# %%  sparse_categorical_crossentropy
+y_val_labels = np.argmax(y_val,axis=1)
+model = models.Sequential()
+model.add(layers.Dense(64, activation='relu', input_shape=(10000,)))
+model.add(layers.Dense(64, activation='relu'))
+model.add(layers.Dense(46, activation='softmax'))
+
+model.compile(optimizer='rmsprop',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+model.fit(x_train,
+          train_labels,
+          epochs=9,
+          batch_size=512,
+          validation_data=(x_val, y_val_labels))
+results = model.evaluate(x_test, test_labels)
+
 
 # %% bad model (bottleneck)
 
@@ -283,6 +314,9 @@ model.fit(x_train,
           validation_data=(x_test, one_hot_test_labels))
 
 # %% 3.6.1 Boston Housing Price 
+# =============================================================================
+# Boston Housing Price
+# =============================================================================
 from keras.datasets import boston_housing
 
 (train_data, train_targets), (test_data, test_targets) =  boston_housing.load_data()
