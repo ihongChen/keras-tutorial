@@ -66,6 +66,8 @@ for i, sample in enumerate(samples):
         index = token_index.get(character)
         results[i, j, index] = 1.
 
+
+
 # %%
 # =============================================================================
 # 6.3 keras one hot encoding
@@ -91,7 +93,26 @@ one_hot_results = tokenizer.texts_to_matrix(samples, mode='binary')
 # This is how you can recover the word index that was computed
 word_index = tokenizer.word_index
 print('Found %s unique tokens.' % len(word_index))
+# %% 
+#==============================================================================
+#  ## words level - one hot encoding with hashing tricks #### 
+#==============================================================================
+samples = ['The cat sat on the mat.', 'The dog ate my homework.']
 
+# We will store our words as vectors of size 1000.
+# Note that if you have close to 1000 words (or more)
+# you will start seeing many hash collisions, which
+# will decrease the accuracy of this encoding method.
+dimensionality = 1000
+max_length = 10
+
+results = np.zeros((len(samples), max_length, dimensionality))
+for i, sample in enumerate(samples):
+    for j, word in list(enumerate(sample.split()))[:max_length]:
+        # Hash the word into a "random" integer index
+        # that is between 0 and 1000
+        index = abs(hash(word)) % dimensionality
+        results[i, j, index] = 1.
 # %%
 # =============================================================================
 # words Embedding 
@@ -287,3 +308,106 @@ plt.title('Training and validation loss')
 plt.legend()
 
 plt.show()
+# %%
+#==============================================================================
+# Pseudo code RNN
+#==============================================================================
+
+state_t = 0  # This is the state at t.
+for input_t in input_sequence:  # We iterate over sequence elements.
+    output_t = f(input_t, state_t)  # `f` is our "step function"
+    state_t = output_t  # The previous output becomes the new state.
+
+state_t = 0
+for input_t in input_sequence:
+    output_t = activation(dot(W, input_t) + dot(U, state_t) + b)
+    state_t = output_t
+
+# %%
+#==============================================================================
+# Numpy implement of a simple RNN
+#==============================================================================
+
+timesteps = 100  # Number of timesteps in the input sequence
+input_features = 32  # Dimensionality of the input feature space
+output_features = 64  # Dimensionality of the output feature space
+
+# This is our input data - just random noise for the sake of our example.
+inputs = np.random.random((timesteps, input_features))
+
+# This is our "initial state": an all-zero vector.
+state_t = np.zeros((output_features,))
+
+# Create random weight matrices
+W = np.random.random((output_features, input_features))
+U = np.random.random((output_features, output_features))
+b = np.random.random((output_features,))
+
+successive_outputs = []
+for input_t in inputs:  # input_t is a vector of shape (input_features,)
+    # We combine the input with the current state
+    # (i.e. the previous output) to obtain the current output.
+    output_t = np.tanh(np.dot(W, input_t) + np.dot(U, state_t) + b)
+
+    # We store this output in a list.
+    successive_outputs.append(output_t)
+
+    # We update the "state" of the network for the next timestep
+    state_t = output_t
+
+# The final output is a 2D tensor of shape (timesteps, output_features).
+final_output_sequence = np.concatenate(successive_outputs, axis=0)
+
+#%% 
+#==============================================================================
+# Simple RNN in keras
+#==============================================================================
+
+from keras.layers import SimpleRNN
+from keras.layers import Embedding
+
+model = Sequential()
+model.add(Embedding(10000,32)) # 1-10000 words,=> 32 dim vectors
+model.add(SimpleRNN(32))
+
+
+
+#%% 
+#==============================================================================
+# RNN imdb data
+#==============================================================================
+from keras.datasets import imdb
+from keras.preprocessing import sequence
+
+max_features = 10000  # number of words to consider as features
+maxlen = 500  # cut texts after this number of words (among top max_features most common words)
+batch_size = 32
+
+print('Loading data...')
+(input_train, y_train), (input_test, y_test) = imdb.load_data(num_words=max_features)
+print(len(input_train), 'train sequences')
+print(len(input_test), 'test sequences')
+
+print('Pad sequences (samples x time)')
+input_train = sequence.pad_sequences(input_train, maxlen=maxlen)
+input_test = sequence.pad_sequences(input_test, maxlen=maxlen)
+print('input_train shape:', input_train.shape)
+print('input_test shape:', input_test.shape)
+
+from keras.layers import Dense
+
+model = Sequential()
+model.add(Embedding(max_features, 32))
+model.add(SimpleRNN(32))
+model.add(Dense(1, activation='sigmoid'))
+
+model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
+history = model.fit(input_train, y_train,
+                    epochs=10,
+                    batch_size=128,
+                    validation_split=0.2)
+
+
+
+
+
